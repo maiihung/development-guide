@@ -1,0 +1,66 @@
+#Quý làm việc với ứng dụng ứng dụng không được chứng minh bằng GitHub.
+# Chúng được cung cấp bởi bên thứ ba và được hành động bởi điều đó.
+#STS, The Policy bảo mật và hỗ trợ dữ liệu
+# Tài liệu.
+
+# Quy trình làm cho bạn tạo tệp gốc SLSA cho dự án của mình.
+# Thế giới của thoả 3 cho các cầu thủ xuất hiện xứ - ra mắt https://slsa.dev/spec/v0.1/requirements
+# Dự án là một cổng của OpenSSF (openssf.org) và được phát hiện tại triển vọng.
+ # https://github.com/slsa-framework/slsa-github-generator.
+# Tệp gốc có thể được xác định bằng cách sử dụng https://github.com/slsa-framework/slsa-verifier.
+# Để biết thêm thông tin về SLSA và cải cách chuỗi cung ứng, hãy truy cập slsa.dev.
+
+ Tên: Máy phát chungSLSA
+ Trên:
+ Công cụ làm việc_công cụ:
+ Thông báo:
+ Các vị thần: [được tạo ra ra ra]
+
+ Công cụ:
+ xây dựng:
+ Chạy: Ubuntu-mới
+ Đầu ra:
+ Tiêu hóa: ${{ steps.hash.outputs.digests}}{{ }
+
+ Các nhà:
+ - vụ: Hành động / Thanh toán@v4
+
+ # ========================================================
+ #
+Bước 1: Xây dựng cổ vật của bạn.
+ #
+ # ========================================================
+ - Tên: Xây dựng
+ chạy: |
+             # Đây là một số hiện vật tuyệt vời.
+             echo "artifact1" > artifact1
+             echo "artifact2" > artifact2
+
+       # ========================================================
+       #
+# Bước 2: Thêm một bước để tạo ra các đối tượng xuất xứ
+      #         as shown below. Update the sha256 sum arguments
+      #         to include all binaries that you generate
+      #         provenance for.
+      #
+      # ========================================================
+      - name: Generate subject for provenance
+        id: hash
+        run: |
+          set -euo pipefail
+
+          # List the artifacts the provenance will refer to.
+          files=$(ls artifact*)
+          # Generate the subjects (base64 encoded).
+          echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
+
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read   # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.digests }}"
+      upload-assets: true # Optional: Upload to a new release
